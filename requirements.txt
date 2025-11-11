@@ -1,0 +1,1 @@
+google-api-python-client>=2.100.0\ngoogle-auth-httplib2>=0.1.1\ngoogle-auth-oauthlib>=1.1.0\ngspread>=5.11.0\npandas>=2.0.0\nopenpyxl>=3.1.0\n
