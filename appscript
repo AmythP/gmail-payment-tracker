@@ -1,0 +1,33 @@
+function recordPaytmPayments() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  // Define your search query to find relevant emails
+  var searchQuery = 'from:no-reply@paytm.com subject:"Rs." newer_than:1d'; // Searches for relevant emails received in the last day
+  var threads = GmailApp.search(searchQuery);
+
+  for (var i = 0; i < threads.length; i++) {
+    var messages = threads[i].getMessages();
+    for (var j = 0; j < messages.length; j++) {
+      var message = messages[j];
+      var subject = message.getSubject();
+      var date = message.getDate(); // Get the full date/time object
+
+      // Regular expression to extract the amount and date string
+      // The pattern looks for "Rs. " followed by a number with decimals
+      var amountMatch = subject.match(/Rs\. (\d+\.\d{2})/);
+
+      if (amountMatch) {
+        var amount = amountMatch[0]; // Gets the full matched string, e.g., "Rs. 265.00"
+
+        // Format date to a consistent string format (optional)
+        var formattedDate = date.toLocaleDateString(); 
+
+        // Append date and amount to the sheet
+        sheet.appendRow([formattedDate, amount]);
+
+        // Mark the email as processed to avoid duplicates next time (optional but recommended)
+        // You can add a label to the email after processing
+        // message.markRead(); // or use labels
+      }
+    }
+  }
+}
