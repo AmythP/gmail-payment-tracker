@@ -1,33 +1,50 @@
 function recordPaytmPayments() {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   // Define your search query to find relevant emails
-  var searchQuery = 'from:no-reply@paytm.com subject:"Rs." newer_than:1d'; // Searches for relevant emails received in the last day
+  var searchQuery = 'from:no-reply@paytm.com subject:"Rs." newer_than:1d'; 
   var threads = GmailApp.search(searchQuery);
+  
+  // 1. Array to hold all the new data rows
+  var dataToRecord = []; 
 
   for (var i = 0; i < threads.length; i++) {
     var messages = threads[i].getMessages();
     for (var j = 0; j < messages.length; j++) {
       var message = messages[j];
       var subject = message.getSubject();
-      var date = message.getDate(); // Get the full date/time object
-
-      // Regular expression to extract the amount and date string
-      // The pattern looks for "Rs. " followed by a number with decimals
+      var date = message.getDate();
+      
       var amountMatch = subject.match(/Rs\. (\d+\.\d{2})/);
 
       if (amountMatch) {
-        var amount = amountMatch[0]; // Gets the full matched string, e.g., "Rs. 265.00"
-
-        // Format date to a consistent string format (optional)
+        var amount = amountMatch[0];
         var formattedDate = date.toLocaleDateString(); 
 
-        // Append date and amount to the sheet
-        sheet.appendRow([formattedDate, amount]);
+        // 2. Instead of appending, push the row data to the array
+        dataToRecord.push([formattedDate, amount]);
 
-        // Mark the email as processed to avoid duplicates next time (optional but recommended)
-        // You can add a label to the email after processing
-        // message.markRead(); // or use labels
+        // Optional: Mark the email as processed to prevent repeats in future runs
+        // message.markRead(); // or use labels to move them out of the search results
       }
     }
+  }
+
+  // --- Data Overwriting Logic ---
+
+  // Get the last row of data *before* this script runs
+  var lastRow = sheet.getLastRow();
+
+  // If there is existing data below the header (Row 1)
+  if (lastRow > 1) {
+    // 3. Clear the existing data from Row 2 down to the last row
+    // Clears the range A2:B[lastRow] (assuming you only use columns A and B)
+    sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).clearContent(); 
+  }
+
+  // If there is new data to write
+  if (dataToRecord.length > 0) {
+    // 4. Write all the new data to the sheet starting at Row 2, Column 1
+    // The range is Row 2, Column 1, with dataToRecord.length rows and 2 columns
+    sheet.getRange(2, 1, dataToRecord.length, 2).setValues(dataToRecord);
   }
 }
